@@ -3,7 +3,7 @@ import requests
 from datetime import datetime, timedelta
 
 # YouTube API Key (Ensure it's set in Streamlit secrets)
-if "AIzaSyBY3A2JiFRIBweMIcUv4oPrBNl-tQsUF4g" not in st.secrets:
+if "YOUTUBE_API_KEY" not in st.secrets:
     st.error("🚨 API Key missing! Add your YouTube API Key in Streamlit secrets.")
     st.stop()
 
