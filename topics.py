@@ -59,12 +59,15 @@ if st.button("Fetch Data"):
             if "items" not in stats_data or "items" not in channel_data:
                 continue
             
-            for video, stat, channel in zip(videos, stats_data["items"], channel_data["items"]):
+            channel_subscribers = {ch["id"]: int(ch["statistics"].get("subscriberCount", 0)) for ch in channel_data["items"]}
+            
+            for video, stat in zip(videos, stats_data["items"]):
                 title = video["snippet"].get("title", "N/A")
                 description = video["snippet"].get("description", "")[:200]
                 video_url = f"https://www.youtube.com/watch?v={video['id']['videoId']}"
                 views = int(stat["statistics"].get("viewCount", 0))
-                subs = int(channel["statistics"].get("subscriberCount", 0))
+                channel_id = video["snippet"].get("channelId", "")
+                subs = channel_subscribers.get(channel_id, 0)
                 
                 if min_subs <= subs <= max_subs and min_views <= views <= max_views:
                     all_results.append({
