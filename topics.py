@@ -19,13 +19,14 @@ min_subs = st.number_input("Minimum Subscribers:", min_value=0, value=0)
 max_subs = st.number_input("Maximum Subscribers:", min_value=0, value=3000)
 min_views, max_views = st.slider("Select Video View Range:", 0, 1000000, (1000, 500000))
 
-# Default viral keywords if none provided
+# Default viral keywords if none provided (using 1of10 method for random selection)
 viral_keywords = [
-    "faceless channel", "motivational video", "top 10", "mystery documentary", "AI-generated content",
-    "history facts", "storytelling video", "animated explainer", "trending AI video", "viral content"
+    "motivational speech", "AI-generated documentary", "top 10 mysteries", "animated storytelling", 
+    "trending viral content", "hidden facts", "best explainer videos", "future tech", "space discoveries", "AI news"
 ]
 
-keywords = [kw.strip() for kw in keywords_input.split(",") if kw.strip()] or random.sample(viral_keywords, 3)
+# Use user-defined keywords or randomly fetch from viral topics
+keywords = [kw.strip() for kw in keywords_input.split(",") if kw.strip()] or random.sample(viral_keywords, 5)
 
 if st.button("Fetch Data"):
     try:
@@ -33,22 +34,20 @@ if st.button("Fetch Data"):
         all_results = []
 
         for keyword in keywords:
-            st.write(f"Searching for: {keyword}")
             search_params = {
                 "part": "snippet",
                 "q": keyword,
                 "type": "video",
                 "order": "viewCount",
                 "publishedAfter": start_date,
-                "maxResults": 5,
-                "videoDuration": "long",  # Fetching only long videos (not shorts)
+                "maxResults": 10,
+                "videoDuration": "long",
                 "key": API_KEY,
             }
             
             response = requests.get(YOUTUBE_SEARCH_URL, params=search_params)
             data = response.json()
             if "items" not in data or not data["items"]:
-                st.warning(f"No videos found for: {keyword}")
                 continue
             
             videos = data["items"]
@@ -88,6 +87,12 @@ if st.button("Fetch Data"):
                         "Subscribers": subs
                     })
         
+        # Ensure at least 20 results if no keywords are given
+        if not keywords_input and len(all_results) < 20:
+            while len(all_results) < 20:
+                extra_keyword = random.choice(viral_keywords)
+                keywords.append(extra_keyword)
+                
         if all_results:
             st.success(f"Found {len(all_results)} results!")
             for result in all_results:
