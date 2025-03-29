@@ -111,4 +111,3 @@ if st.button("Fetch Data"):
             st.warning("No results found matching your criteria.")
     except Exception as e:
         st.error(f"Error: {e}")
-
