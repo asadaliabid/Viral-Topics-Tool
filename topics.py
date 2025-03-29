@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import random
 
 # YouTube API Key
-API_KEY = "AIzaSyDwgcJiR7rBjMpUBc7ykH-36MIHcbdGgAc"
+API_KEY = "AIzaSyCKUthZo_IvB_EkuXQvQgXVo7v9RCRb6sc"
 YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search"
 YOUTUBE_VIDEO_URL = "https://www.googleapis.com/youtube/v3/videos"
 YOUTUBE_CHANNEL_URL = "https://www.googleapis.com/youtube/v3/channels"
@@ -19,27 +19,21 @@ min_subs = st.number_input("Minimum Subscribers:", min_value=0, value=0)
 max_subs = st.number_input("Maximum Subscribers:", min_value=0, value=3000)
 min_views, max_views = st.slider("Select Video View Range:", 0, 1000000, (1000, 500000))
 
-# Default viral keywords if none provided (using 1of10 method for random selection)
+# Default viral keywords if none provided
 viral_keywords = [
-    "motivational speech", "AI-generated documentary", "top 10 mysteries", "animated storytelling", 
+    "motivational speech", "AI-generated documentary", "top 10 mysteries", "animated storytelling",
     "trending viral content", "hidden facts", "best explainer videos", "future tech", "space discoveries", "AI news"
 ]
 
 # Use user-defined keywords or randomly fetch from viral topics
 keywords = [kw.strip() for kw in keywords_input.split(",") if kw.strip()] or random.sample(viral_keywords, 5)
 
-### 🔥 DEBUGGING: Print user inputs ###
-st.write("**Debugging Info:**")
-st.write(f"Keywords Used: {keywords}")
-st.write(f"Subscriber Range: {min_subs} - {max_subs}")
-st.write(f"View Range: {min_views} - {max_views}")
-
 if st.button("Fetch Data"):
     try:
         start_date = (datetime.utcnow() - timedelta(days=int(days))).isoformat("T") + "Z"
         all_results = []
 
-        while len(all_results) < 20:
+        while len(all_results) < 5:  # Ensure at least 5 results
             keyword = random.choice(keywords)
             search_params = {
                 "part": "snippet",
@@ -49,42 +43,36 @@ if st.button("Fetch Data"):
                 "publishedAfter": start_date,
                 "maxResults": 10,
                 "videoDuration": "long",
-                "relevanceLanguage": "en",  # 🚀 Ensures results are in English
+                "relevanceLanguage": "en",  # Ensures English results
                 "key": API_KEY,
             }
-
-            ### 🔥 DEBUGGING: Print API request URL ###
-            st.write(f"Fetching data for keyword: **{keyword}**")
+            
             response = requests.get(YOUTUBE_SEARCH_URL, params=search_params)
-            st.write(f"API Response Status: {response.status_code}")  # ✅ Check if API is responding
-
             data = response.json()
-            st.write("🔍 Raw API Response:", data)  # 🚀 Debug full response
 
             if "items" not in data or not data["items"]:
-                st.warning("No videos found for this keyword. Trying another keyword...")
                 continue
-
+            
             videos = data["items"]
             video_ids = [v["id"]["videoId"] for v in videos if "id" in v and "videoId" in v["id"]]
             channel_ids = [v["snippet"]["channelId"] for v in videos if "snippet" in v and "channelId" in v["snippet"]]
-
+            
             if not video_ids or not channel_ids:
                 continue
-
+            
             stats_params = {"part": "statistics", "id": ",".join(video_ids), "key": API_KEY}
             stats_response = requests.get(YOUTUBE_VIDEO_URL, params=stats_params)
             stats_data = stats_response.json()
-
+            
             channel_params = {"part": "statistics", "id": ",".join(channel_ids), "key": API_KEY}
             channel_response = requests.get(YOUTUBE_CHANNEL_URL, params=channel_params)
             channel_data = channel_response.json()
-
+            
             if "items" not in stats_data or "items" not in channel_data:
                 continue
-
+            
             channel_subscribers = {ch["id"]: int(ch["statistics"].get("subscriberCount", 0)) for ch in channel_data["items"]}
-
+            
             for video, stat in zip(videos, stats_data["items"]):
                 title = video["snippet"].get("title", "N/A")
                 description = video["snippet"].get("description", "")[:200]
@@ -94,7 +82,7 @@ if st.button("Fetch Data"):
                 subs = channel_subscribers.get(channel_id, 0)
                 thumbnail_url = video["snippet"].get("thumbnails", {}).get("high", {}).get("url", "")
                 upload_date = video["snippet"].get("publishedAt", "N/A")[:10]
-
+                
                 if min_subs <= subs <= max_subs and min_views <= views <= max_views:
                     all_results.append({
                         "Title": title,
@@ -105,11 +93,11 @@ if st.button("Fetch Data"):
                         "Thumbnail": thumbnail_url,
                         "Upload Date": upload_date
                     })
-                    if len(all_results) >= 20:
+                    if len(all_results) >= 5:
                         break
-
+        
         if all_results:
-            st.success(f"✅ Found {len(all_results)} results!")
+            st.success(f"Found {len(all_results)} results!")
             for result in all_results:
                 st.image(result["Thumbnail"], width=300)
                 st.markdown(
@@ -122,6 +110,6 @@ if st.button("Fetch Data"):
                 )
                 st.write("---")
         else:
-            st.warning("⚠️ No results found matching your criteria. Try adjusting your filters.")
+            st.warning("No results found matching your criteria.")
     except Exception as e:
-        st.error(f"🚨 Error: {e}")
+        st.error(f"Error: {e}")
