@@ -45,36 +45,54 @@ if st.button("Fetch Data"):
                 "videoDuration": "long",
                 "key": API_KEY,
             }
-            response = requests.get(YOUTUBE_SEARCH_URL, params=search_params)
-data = response.json()
-st.write("🔍 YouTube Search API Response:", data)  # Debugging output
-            if "items" not in data or not data["items"]:
+            
+            try:
+                response = requests.get(YOUTUBE_SEARCH_URL, params=search_params)
+                data = response.json()
+                st.write("🔍 YouTube Search API Response:", data)  # Debugging Output
+
+                if "items" not in data or not data["items"]:
+                    continue
+                
+                videos = data["items"]
+                video_ids = [v["id"]["videoId"] for v in videos if "id" in v and "videoId" in v["id"]]
+                channel_ids = [v["snippet"]["channelId"] for v in videos if "snippet" in v and "channelId" in v["snippet"]]
+
+                if not video_ids or not channel_ids:
+                    continue
+            except Exception as e:
+                st.error(f"Error fetching YouTube search data: {e}")
                 continue
-            
-            videos = data["items"]
-            video_ids = [v["id"]["videoId"] for v in videos if "id" in v and "videoId" in v["id"]]
-            channel_ids = [v["snippet"]["channelId"] for v in videos if "snippet" in v and "channelId" in v["snippet"]]
-            
-            if not video_ids or not channel_ids:
-                continue
-            
+
+            # Fetch Video Stats
             stats_params = {"part": "statistics", "id": ",".join(video_ids), "key": API_KEY}
-            stats_response = requests.get(YOUTUBE_VIDEO_URL, params=stats_params)
-stats_data = stats_response.json()
-st.write("📊 YouTube Video Stats API Response:", stats_data)  # Debugging output
+            try:
+                stats_response = requests.get(YOUTUBE_VIDEO_URL, params=stats_params)
+                stats_data = stats_response.json()
+                st.write("📊 YouTube Video Stats API Response:", stats_data)  # Debugging Output
 
-            
-            channel_params = {"part": "statistics", "id": ",".join(channel_ids), "key": API_KEY}
-           channel_response = requests.get(YOUTUBE_CHANNEL_URL, params=channel_params)
-channel_data = channel_response.json()
-st.write("📢 YouTube Channel Stats API Response:", channel_data)  # Debugging output
-
-            
-            if "items" not in stats_data or "items" not in channel_data:
+                if "items" not in stats_data:
+                    continue
+            except Exception as e:
+                st.error(f"Error fetching video stats: {e}")
                 continue
-            
-            channel_subscribers = {ch["id"]: int(ch["statistics"].get("subscriberCount", 0)) for ch in channel_data["items"]}
-            
+
+            # Fetch Channel Stats
+            channel_params = {"part": "statistics", "id": ",".join(channel_ids), "key": API_KEY}
+            try:
+                channel_response = requests.get(YOUTUBE_CHANNEL_URL, params=channel_params)
+                channel_data = channel_response.json()
+                st.write("📢 YouTube Channel Stats API Response:", channel_data)  # Debugging Output
+
+                if "items" not in channel_data:
+                    continue
+                
+                channel_subscribers = {ch["id"]: int(ch["statistics"].get("subscriberCount", 0)) for ch in channel_data["items"]}
+            except Exception as e:
+                st.error(f"Error fetching channel stats: {e}")
+                continue
+
+            # Process Data
             for video, stat in zip(videos, stats_data["items"]):
                 title = video["snippet"].get("title", "N/A")
                 description = video["snippet"].get("description", "")[:200]
@@ -84,7 +102,7 @@ st.write("📢 YouTube Channel Stats API Response:", channel_data)  # Debugging 
                 subs = channel_subscribers.get(channel_id, 0)
                 thumbnail_url = video["snippet"].get("thumbnails", {}).get("high", {}).get("url", "")
                 upload_date = video["snippet"].get("publishedAt", "N/A")[:10]
-                
+
                 if min_subs <= subs <= max_subs and min_views <= views <= max_views:
                     all_results.append({
                         "Title": title,
@@ -98,6 +116,7 @@ st.write("📢 YouTube Channel Stats API Response:", channel_data)  # Debugging 
                     if len(all_results) >= 20:
                         break
         
+        # Display Results
         if all_results:
             st.success(f"Found {len(all_results)} results!")
             for result in all_results:
@@ -113,5 +132,6 @@ st.write("📢 YouTube Channel Stats API Response:", channel_data)  # Debugging 
                 st.write("---")
         else:
             st.warning("No results found matching your criteria.")
+
     except Exception as e:
-        st.error(f"Error: {e}")
+        st.error(f"Unexpected Error: {e}")
