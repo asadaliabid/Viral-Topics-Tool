@@ -7,7 +7,8 @@ if "YOUTUBE_API_KEY" not in st.secrets:
     st.error("🚨 API Key missing! Add your YouTube API Key in Streamlit secrets.")
     st.stop()
 
-API_KEY = st.secrets["AIzaSyBY3A2JiFRIBweMIcUv4oPrBNl-tQsUF4g"]
+API_KEY = "AIzaSyBY3A2JiFRIBweMIcUv4oPrBNl-tQsUF4g"
+
 
 # API Endpoints
 YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search"
