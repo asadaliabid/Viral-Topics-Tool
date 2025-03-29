@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import random
 
 # YouTube API Key
-API_KEY = "AIzaSyCKUthZo_IvB_EkuXQvQgXVo7v9RCRb6sc"
+API_KEY = "AIzaSyBY3A2JiFRIBweMIcUv4oPrBNl-tQsUF4g"
 YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search"
 YOUTUBE_VIDEO_URL = "https://www.googleapis.com/youtube/v3/videos"
 YOUTUBE_CHANNEL_URL = "https://www.googleapis.com/youtube/v3/channels"
@@ -26,14 +26,16 @@ viral_keywords = [
 ]
 
 # Use user-defined keywords or randomly fetch from viral topics
-keywords = [kw.strip() for kw in keywords_input.split(",") if kw.strip()] or random.sample(viral_keywords, 5)
+keywords = [kw.strip() for kw in keywords_input.split(",") if kw.strip()] or random.sample(viral_keywords, 3)
 
 if st.button("Fetch Data"):
     try:
         start_date = (datetime.utcnow() - timedelta(days=int(days))).isoformat("T") + "Z"
         all_results = []
+        attempts = 0
 
-        while len(all_results) < 5:
+        while len(all_results) < 5 and attempts < 10:
+            attempts += 1
             keyword = random.choice(keywords)
             search_params = {
                 "part": "snippet",
@@ -41,7 +43,7 @@ if st.button("Fetch Data"):
                 "type": "video",
                 "order": "viewCount",
                 "publishedAfter": start_date,
-                "maxResults": 10,
+                "maxResults": 3,  # Reduced for quota efficiency
                 "videoDuration": "long",
                 "relevanceLanguage": "en",  # Ensures only English videos
                 "key": API_KEY,
@@ -49,7 +51,7 @@ if st.button("Fetch Data"):
             
             response = requests.get(YOUTUBE_SEARCH_URL, params=search_params)
             data = response.json()
-            st.write(data)  # Debugging: Print API response
+            st.write("Debugging API Response:", data)  # Debugging: Print API response
             
             if "items" not in data or not data["items"]:
                 continue
@@ -64,12 +66,12 @@ if st.button("Fetch Data"):
             stats_params = {"part": "statistics", "id": ",".join(video_ids), "key": API_KEY}
             stats_response = requests.get(YOUTUBE_VIDEO_URL, params=stats_params)
             stats_data = stats_response.json()
-            st.write(stats_data)  # Debugging: Print API response
+            st.write("Video Stats API Response:", stats_data)  # Debugging: Print API response
             
             channel_params = {"part": "statistics", "id": ",".join(channel_ids), "key": API_KEY}
             channel_response = requests.get(YOUTUBE_CHANNEL_URL, params=channel_params)
             channel_data = channel_response.json()
-            st.write(channel_data)  # Debugging: Print API response
+            st.write("Channel Stats API Response:", channel_data)  # Debugging: Print API response
             
             if "items" not in stats_data or "items" not in channel_data:
                 continue
