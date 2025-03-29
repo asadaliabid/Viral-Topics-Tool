@@ -41,7 +41,7 @@ if st.button("Fetch Data"):
                 "type": "video",
                 "order": "viewCount",
                 "publishedAfter": start_date,
-                "maxResults": 10,
+                "maxResults": 5,
                 "videoDuration": "long",
                 "relevanceLanguage": "en",  # Ensures English results
                 "key": API_KEY,
