@@ -45,9 +45,9 @@ if st.button("Fetch Data"):
                 "videoDuration": "long",
                 "key": API_KEY,
             }
-            
             response = requests.get(YOUTUBE_SEARCH_URL, params=search_params)
-            data = response.json()
+data = response.json()
+st.write("🔍 YouTube Search API Response:", data)  # Debugging output
             if "items" not in data or not data["items"]:
                 continue
             
@@ -60,11 +60,15 @@ if st.button("Fetch Data"):
             
             stats_params = {"part": "statistics", "id": ",".join(video_ids), "key": API_KEY}
             stats_response = requests.get(YOUTUBE_VIDEO_URL, params=stats_params)
-            stats_data = stats_response.json()
+stats_data = stats_response.json()
+st.write("📊 YouTube Video Stats API Response:", stats_data)  # Debugging output
+
             
             channel_params = {"part": "statistics", "id": ",".join(channel_ids), "key": API_KEY}
-            channel_response = requests.get(YOUTUBE_CHANNEL_URL, params=channel_params)
-            channel_data = channel_response.json()
+           channel_response = requests.get(YOUTUBE_CHANNEL_URL, params=channel_params)
+channel_data = channel_response.json()
+st.write("📢 YouTube Channel Stats API Response:", channel_data)  # Debugging output
+
             
             if "items" not in stats_data or "items" not in channel_data:
                 continue
