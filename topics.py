@@ -10,20 +10,16 @@ YOUTUBE_VIDEO_URL = "https://www.googleapis.com/youtube/v3/videos"
 YOUTUBE_CHANNEL_URL = "https://www.googleapis.com/youtube/v3/channels"
 
 # Streamlit App Title
-st.title("🔥 YouTube Viral Topics Tool")
+st.title("YouTube Viral Topics Tool")
 
 # User Inputs
-days = st.number_input("📅 Enter Days to Search (1-90):", min_value=1, max_value=90, value=5)
-keywords_input = st.text_area("🔎 Enter Keywords (comma-separated, leave empty for random viral videos):", "")
-min_subs = st.number_input("👥 Minimum Subscribers:", min_value=0, value=0)
-max_subs = st.number_input("👥 Maximum Subscribers:", min_value=0, value=3000)
-min_views, max_views = st.slider("📊 Select Video View Range:", 0, 1000000, (1000, 500000))
+days = st.number_input("Enter Days to Search (1-90):", min_value=1, max_value=90, value=5)
+keywords_input = st.text_area("Enter Keywords (comma-separated, leave empty for random viral videos):", "")
+min_subs = st.number_input("Minimum Subscribers:", min_value=0, value=0)
+max_subs = st.number_input("Maximum Subscribers:", min_value=0, value=3000)
+min_views, max_views = st.slider("Select Video View Range:", 0, 1000000, (1000, 500000))
 
-# 🎥 Filter by Video Duration
-video_duration = st.radio("⏳ Select Video Length:", ["Any", "Short (<4 min)", "Medium (4-20 min)", "Long (>20 min)"], index=2)
-duration_map = {"Any": "any", "Short (<4 min)": "short", "Medium (4-20 min)": "medium", "Long (>20 min)": "long"}
-
-# 🔥 Default viral keywords
+# Default viral keywords if none provided (using 1of10 method for random selection)
 viral_keywords = [
     "motivational speech", "AI-generated documentary", "top 10 mysteries", "animated storytelling", 
     "trending viral content", "hidden facts", "best explainer videos", "future tech", "space discoveries", "AI news"
@@ -32,7 +28,13 @@ viral_keywords = [
 # Use user-defined keywords or randomly fetch from viral topics
 keywords = [kw.strip() for kw in keywords_input.split(",") if kw.strip()] or random.sample(viral_keywords, 5)
 
-if st.button("🚀 Fetch Data"):
+### 🔥 DEBUGGING: Print user inputs ###
+st.write("**Debugging Info:**")
+st.write(f"Keywords Used: {keywords}")
+st.write(f"Subscriber Range: {min_subs} - {max_subs}")
+st.write(f"View Range: {min_views} - {max_views}")
+
+if st.button("Fetch Data"):
     try:
         start_date = (datetime.utcnow() - timedelta(days=int(days))).isoformat("T") + "Z"
         all_results = []
@@ -46,15 +48,21 @@ if st.button("🚀 Fetch Data"):
                 "order": "viewCount",
                 "publishedAfter": start_date,
                 "maxResults": 10,
-                "videoDuration": duration_map[video_duration],
-                "relevanceLanguage": "en",  # 🔹 Ensures only English videos
+                "videoDuration": "long",
+                "relevanceLanguage": "en",  # 🚀 Ensures results are in English
                 "key": API_KEY,
             }
 
+            ### 🔥 DEBUGGING: Print API request URL ###
+            st.write(f"Fetching data for keyword: **{keyword}**")
             response = requests.get(YOUTUBE_SEARCH_URL, params=search_params)
+            st.write(f"API Response Status: {response.status_code}")  # ✅ Check if API is responding
+
             data = response.json()
+            st.write("🔍 Raw API Response:", data)  # 🚀 Debug full response
 
             if "items" not in data or not data["items"]:
+                st.warning("No videos found for this keyword. Trying another keyword...")
                 continue
 
             videos = data["items"]
@@ -103,14 +111,17 @@ if st.button("🚀 Fetch Data"):
         if all_results:
             st.success(f"✅ Found {len(all_results)} results!")
             for result in all_results:
-                st.subheader(result["Title"])
                 st.image(result["Thumbnail"], width=300)
-                st.write(f"📅 **Upload Date:** {result['Upload Date']}")
-                st.write(f"👁️ **Views:** {result['Views']} | 👤 **Subscribers:** {result['Subscribers']}")
-                st.write(f"📝 **Description:** {result['Description']}")
-                st.markdown(f"[▶ Watch Video]({result['URL']})", unsafe_allow_html=True)
+                st.markdown(
+                    f"**Title:** {result['Title']}  \n"
+                    f"**Description:** {result['Description']}  \n"
+                    f"**URL:** [Watch Video]({result['URL']})  \n"
+                    f"**Views:** {result['Views']}  \n"
+                    f"**Subscribers:** {result['Subscribers']}  \n"
+                    f"**Upload Date:** {result['Upload Date']}"
+                )
                 st.write("---")
         else:
-            st.warning("⚠️ No results found matching your criteria.")
+            st.warning("⚠️ No results found matching your criteria. Try adjusting your filters.")
     except Exception as e:
-        st.error(f"❌ Error: {e}")
+        st.error(f"🚨 Error: {e}")
