@@ -41,7 +41,7 @@ if st.button("Fetch Data"):
                 "order": "viewCount",
                 "publishedAfter": start_date,
                 "maxResults": 5,
-                "videoDuration": "medium",  # Fetching only long videos (not shorts)
+                "videoDuration": "long",  # Fetching only long videos (not shorts)
                 "key": API_KEY,
             }
             
@@ -55,10 +55,13 @@ if st.button("Fetch Data"):
             video_ids = [v["id"]["videoId"] for v in videos if "id" in v and "videoId" in v["id"]]
             channel_ids = [v["snippet"]["channelId"] for v in videos if "snippet" in v and "channelId" in v["snippet"]]
             
+            if not video_ids or not channel_ids:
+                continue
+            
             stats_params = {"part": "statistics", "id": ",".join(video_ids), "key": API_KEY}
             stats_response = requests.get(YOUTUBE_VIDEO_URL, params=stats_params)
             stats_data = stats_response.json()
-
+            
             channel_params = {"part": "statistics", "id": ",".join(channel_ids), "key": API_KEY}
             channel_response = requests.get(YOUTUBE_CHANNEL_URL, params=channel_params)
             channel_data = channel_response.json()
