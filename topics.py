@@ -33,7 +33,8 @@ if st.button("Fetch Data"):
         start_date = (datetime.utcnow() - timedelta(days=int(days))).isoformat("T") + "Z"
         all_results = []
 
-        for keyword in keywords:
+        while len(all_results) < 20:
+            keyword = random.choice(keywords)
             search_params = {
                 "part": "snippet",
                 "q": keyword,
@@ -77,6 +78,8 @@ if st.button("Fetch Data"):
                 views = int(stat["statistics"].get("viewCount", 0))
                 channel_id = video["snippet"].get("channelId", "")
                 subs = channel_subscribers.get(channel_id, 0)
+                thumbnail_url = video["snippet"].get("thumbnails", {}).get("high", {}).get("url", "")
+                upload_date = video["snippet"].get("publishedAt", "N/A")[:10]
                 
                 if min_subs <= subs <= max_subs and min_views <= views <= max_views:
                     all_results.append({
@@ -84,24 +87,24 @@ if st.button("Fetch Data"):
                         "Description": description,
                         "URL": video_url,
                         "Views": views,
-                        "Subscribers": subs
+                        "Subscribers": subs,
+                        "Thumbnail": thumbnail_url,
+                        "Upload Date": upload_date
                     })
+                    if len(all_results) >= 20:
+                        break
         
-        # Ensure at least 20 results if no keywords are given
-        if not keywords_input and len(all_results) < 20:
-            while len(all_results) < 20:
-                extra_keyword = random.choice(viral_keywords)
-                keywords.append(extra_keyword)
-                
         if all_results:
             st.success(f"Found {len(all_results)} results!")
             for result in all_results:
+                st.image(result["Thumbnail"], width=300)
                 st.markdown(
                     f"**Title:** {result['Title']}  \n"
                     f"**Description:** {result['Description']}  \n"
                     f"**URL:** [Watch Video]({result['URL']})  \n"
                     f"**Views:** {result['Views']}  \n"
-                    f"**Subscribers:** {result['Subscribers']}"
+                    f"**Subscribers:** {result['Subscribers']}  \n"
+                    f"**Upload Date:** {result['Upload Date']}"
                 )
                 st.write("---")
         else:
