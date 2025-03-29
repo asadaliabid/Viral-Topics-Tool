@@ -13,7 +13,7 @@ YOUTUBE_CHANNEL_URL = "https://www.googleapis.com/youtube/v3/channels"
 st.title("YouTube Viral Topics Tool")
 
 # User Inputs
-days = st.number_input("Enter Days to Search (1-30):", min_value=1, max_value=30, value=5)
+days = st.number_input("Enter Days to Search (1-90):", min_value=1, max_value=90, value=5)
 keywords_input = st.text_area("Enter Keywords (comma-separated, leave empty for random viral videos):", "")
 min_subs = st.number_input("Minimum Subscribers:", min_value=0, value=0)
 max_subs = st.number_input("Maximum Subscribers:", min_value=0, value=3000)
@@ -21,8 +21,8 @@ min_views, max_views = st.slider("Select Video View Range:", 0, 1000000, (1000, 
 
 # Default viral keywords if none provided
 viral_keywords = [
-    "viral video", "trending now", "must watch", "best moments", "crazy footage",
-    "epic fails", "funny clips", "breaking news", "amazing video", "new upload"
+    "faceless channel", "motivational video", "top 10", "mystery documentary", "AI-generated content",
+    "history facts", "storytelling video", "animated explainer", "trending AI video", "viral content"
 ]
 
 keywords = [kw.strip() for kw in keywords_input.split(",") if kw.strip()] or random.sample(viral_keywords, 3)
@@ -41,7 +41,7 @@ if st.button("Fetch Data"):
                 "order": "viewCount",
                 "publishedAfter": start_date,
                 "maxResults": 5,
-                "videoDuration": "short",  # Fetching short viral videos
+                "videoDuration": "medium",  # Fetching only long videos (not shorts)
                 "key": API_KEY,
             }
             
